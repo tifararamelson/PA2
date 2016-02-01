@@ -136,7 +136,7 @@ class MovieData
 					pts += 2.0
 				when 4
 					pts += 1.0
-				else #5
+				else 5
 					pts += 0.0
 				end
 			end
