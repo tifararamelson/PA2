@@ -164,8 +164,8 @@ class MovieData
 			u = x[:u]
 			m = x[:m]
 			rating = 0.0
-		 	@test_u_i_r[u].each do |x|
-		 		x.each do |mov, rat|
+		 	@test_u_i_r[u].each do |y|
+		 		y.each do |mov, rat|
 		 			if mov == m
 		 				rating = rat.to_f
 		 				break
