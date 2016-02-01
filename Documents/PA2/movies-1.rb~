@@ -1,0 +1,134 @@
+#Tifara Ramelson
+#Assignment 1
+#Note: when running this program, it takes as argument the u.data file
+
+class Movie_Predictor
+	$item_rating = Hash.new{|key, value| key[value] = []}
+	$user_item_rating = Hash.new{|key, value| key[value] = []}
+	$users = []
+	
+	#loads the data - stores it into data structure
+	def load_data()
+		path = ARGV.first #u.data
+
+		#check if the file exists
+		if File.exist?(path)
+			#parse data - store the necessary info in a hash
+			open(path).each do |line| 
+				result = line.split(/\t/)
+				$item_rating[result[1].to_i].push(result[2].to_i) #need to convert to int
+				item_r_temp = Hash.new
+				item_r_temp[result[1].to_i] = result[2].to_i 
+				$user_item_rating[result[0].to_i].push(item_r_temp)
+				$users.push(result[0].to_i)
+			end
+		else #file does not exist
+			puts "Error: File does not exist. Requires 'u.data' file."
+		end
+	end
+
+	#Gets the popularity of a movie by getting the average of all the ratings for that movie
+	def popularity(movie_id)
+		ratings = $item_rating[movie_id]
+		total = 0.0
+		for r in ratings do
+			total += r
+		end
+		total = total / ratings.length.to_f
+		return total
+	end
+
+	#Gets the list of movies and their popularity in decreasing order
+	def popularity_list
+		mov_rat = {}
+		$item_rating.each do |item, r|
+			mov_rat[item] = popularity(item)
+		end
+		h = Hash[mov_rat.sort_by{|k, v| v}.reverse]
+		h.each do |item, r| #nicer format
+			puts "#{item}\t#{r}"
+		end
+	end
+
+	def similarity(user1, user2)	
+		#store the info in the right way		
+		u1_ratings = {}
+		$user_item_rating[user1].each do |h|
+			h.each do |m, r|
+				u1_ratings[m] = r
+			end
+		end
+		u2_ratings = {}
+		$user_item_rating[user2].each do |h|
+			h.each do |m, r|
+				u2_ratings[m] = r
+			end
+		end
+
+		#calculate the similarity between the 2 users
+		count = 0 #to get num of movies they both rated
+		pts = 0.0 #overall score
+
+		#for each item - if they both rated it
+		$item_rating.each do |item, ratings|
+			if (u1_ratings.include? item) && (u2_ratings.include? item)
+				count += 1
+				case (u1_ratings[item] - u2_ratings[item]).abs
+				when 0
+					pts += 5.0
+				when 1
+					pts += 4.0
+				when 2
+					pts += 3.0
+				when 3
+					pts += 2.0
+				when 4
+					pts += 1.0
+				else 5
+					pts += 0.0
+				end
+			end
+		end
+		total = pts/(count*5.0)
+		return total
+	end
+
+	#This can take a few minutes to run (since it has to go through all the users)
+	def most_similar(u)
+		score = -1
+		user = -1
+		$users.each do |u2|
+			if u != u2 #ensure it's not the same user
+				sim = similarity(u, u2) 
+				if sim > score #new score if similarity is higher
+					score = sim
+					user = u2
+				end
+			end
+		end
+		return user
+	end
+end
+
+#Testing
+mp = Movie_Predictor.new
+mp.load_data()
+movie_id = 100
+p1 = mp.popularity(movie_id)
+puts "The rating for the movie id #{movie_id} is: #{p1}"
+movie_id = 1160
+p2 = mp.popularity(movie_id)
+puts "The rating for the movie id #{movie_id} is: #{p2}"
+puts "This is the popularity list in decreasing order: "
+mp.popularity_list
+
+puts mp.similarity(32, 631)
+puts mp.similarity(100, 100)
+puts mp.similarity(402, 233)
+puts mp.similarity(2, 9)
+puts mp.similarity(300, 600)
+puts mp.similarity(401, 941)
+
+puts mp.most_similar(342)
+puts mp.most_similar(401)
+puts mp.most_similar(1)
